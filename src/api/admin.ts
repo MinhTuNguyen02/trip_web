@@ -1,5 +1,5 @@
 import { api } from "./http";
-import type { Tour, Destination, POI } from "../types";
+import type { Tour, Destination, POI, User } from "../types";
 
 /* --------- Tours --------- */
 export async function adminCreateTour(body: Partial<Tour>) {
@@ -52,3 +52,79 @@ export async function adminToggleDestinationActive(id: string, is_active: boolea
   const { data } = await api.put(`/destinations/${id}/active-hard`, { is_active });
   return data as Destination;
 }
+
+/* --------- Users --------- */
+export async function listUsers(): Promise<User[]> {
+  const { data } = await api.get("/auth/users"); // backend trả toàn bộ user
+  return data;
+}
+
+export async function listAdmins(): Promise<User[]> {
+  const { data } = await api.get("/auth/admins"); // hoặc /admin/users?role=admin
+  return data;
+}
+
+export async function createAdmin(input: {
+  name: string;
+  email: string;
+  password: string;
+}): Promise<User> {
+  const { data } = await api.post("/auth/admins", input); // backend phải set role=admin
+  return data;
+}
+
+
+export async function adminListBookings(params: ListParams): Promise<ListResp> {
+  const { data } = await api.get("/admin/", { params });
+  return data;
+}
+
+export async function adminGetBooking(id: string): Promise<AdminBooking> {
+  const { data } = await api.get(`/admin/${id}`); // <-- thêm /
+  return data;
+}
+export type ListParams = {
+  q?: string;            // tìm theo email, tên user, title, orderCode
+  status?: string;       // booking status
+  payment_status?: string;
+  date_from?: string;    // ISO yyyy-mm-dd
+  date_to?: string;      // ISO yyyy-mm-dd
+  limit?: number;
+  page?: number;         // 1-based
+};
+
+export type ListResp = {
+  items: AdminBooking[];
+  total: number;
+  page: number;
+  pages: number;
+};
+export type AdminBooking = {
+  _id: string;
+  user: { _id: string; name: string; email: string } | string; // tuỳ populate
+  user_id?: string;
+  tour_id: string;
+  option_id: string;
+  snapshot_title?: string;
+  start_date?: string;   // ISO
+  start_time?: string;   // "HH:mm"
+  qty: number;
+  unit_price: number;
+  total: number;
+  status: "pending" | "confirmed" | "cancelled";
+  payment_status: "unpaid" | "paid" | "refunded";
+  payment_id?: string;
+  createdAt: string;
+  updatedAt: string;
+  tickets?: Array<{
+    _id: string;
+    code: string;
+    status: "valid" | "used" | "void";
+    passenger?: { name?: string; phone?: string; address?: string };
+  }>;
+  payment?: {
+    provider: string;
+    intent_id?: string; // orderCode
+    status: string;
+  };
+};

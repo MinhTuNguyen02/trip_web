@@ -226,3 +226,14 @@ export type Ticket = {
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 };
+
+
+export type User = {
+  _id: string;
+  name: string;
+  email: string;
+  role: "user" | "admin";
+  phone?: string;
+  address?: string;
+  createdAt?: string;
+};

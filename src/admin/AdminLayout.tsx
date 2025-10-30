@@ -12,8 +12,8 @@ export default function AdminLayout() {
         <NavLink to="/admin/tours" className={({isActive}) => i(isActive)}>Quản lý Tours</NavLink>
         <NavLink to="/admin/destinations" className={({isActive}) => i(isActive)}>Điểm đến</NavLink>
         <NavLink to="/admin/pois" className={({isActive}) => i(isActive)}>Quản lý POIs</NavLink>
+        <NavLink to="/admin/users" className={({isActive}) => i(isActive)}>Quản lý người dùng</NavLink>
         <NavLink to="/admin/bookings" className={({isActive}) => i(isActive)}>Đơn hàng</NavLink>
-        <NavLink to="/admin/payments" className={({isActive}) => i(isActive)}>Thanh toán</NavLink>
       </aside>
       <main className="p-6"><Outlet/></main>
     </div>

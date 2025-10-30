@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { listTours } from "../api/tours";
 import { listDestinations } from "../api/destinations";
 import { listPOIs } from "../api/pois";
@@ -21,6 +21,7 @@ import {
   adminUpdateTourOptionStatus,
 } from "../api/tourOption";
 import { createPortal } from "react-dom";
+import React from "react";
 
 type RatingOption = 0 | 3 | 4 | 4.5;
 
@@ -28,37 +29,71 @@ export default function ToursManage() {
   // ---------------- Data ----------------
   const [tours, setTours] = useState<Tour[]>([]);
   const [dests, setDests] = useState<Destination[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initLoading, setInitLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
   const [editing, setEditing] = useState<Tour | null>(null);
 
   // ---------------- Filters ----------------
-  const [destination, setDestination] = useState<string>("");
-  const [departure, setDeparture] = useState<string>("");
-  const [minPrice, setMinPrice] = useState<string>("");
-  const [maxPrice, setMaxPrice] = useState<string>("");
-  const [ratingMin, setRatingMin] = useState<RatingOption>(0);
+  const [destination, setDestination] = useState("");
+  const [departure, setDeparture]   = useState("");
+  const [minPrice, setMinPrice]     = useState(""); // raw digits
+  const [maxPrice, setMaxPrice]     = useState("");
+  const [ratingMin, setRatingMin]   = useState<RatingOption>(0);
 
-  const reload = async () => {
-    setLoading(true);
+  // load dests 1 lần + load bảng lần đầu
+  useEffect(() => {
+    (async () => {
+      setInitLoading(true);
+      try {
+        const d = await listDestinations();
+        setDests(d);
+      } finally {
+        setInitLoading(false);
+      }
+    })();
+  }, []);
+
+  // Debounce fetch tours khi filter đổi
+  const loadTours = useCallback(async () => {
     const params: any = {};
     if (destination) params.destination = destination;
-    if (departure) params.departure = departure;
+    if (departure)   params.departure   = departure;
     if (minPrice.trim() !== "") params.minPrice = Number(minPrice);
     if (maxPrice.trim() !== "") params.maxPrice = Number(maxPrice);
-    const [t, d] = await Promise.all([listTours(params), listDestinations()]);
-    setTours(t);
-    setDests(d);
-    setLoading(false);
-  };
+  
+    setTableLoading(true);
+    try {
+      const t = await listTours(params);
+      setTours(t);
+    } finally {
+      setTableLoading(false);
+    }
+  }, [destination, departure, minPrice, maxPrice]);
 
-  useEffect(() => { reload(); }, [destination, departure, minPrice, maxPrice]);
+  const reload = useCallback(() => loadTours(), [loadTours]);
+
+  useEffect(() => {
+    loadTours();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  
+  // 5) Debounce khi filter đổi
+  const debounceRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(() => {
+      loadTours();
+    }, 300);
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [loadTours]);
 
   const destMap = useMemo(
-    () =>
-      dests.reduce<Record<string, string>>((m, d) => {
-        m[d._id] = (d as any).name ?? "";
-        return m;
-      }, {}),
+    () => dests.reduce<Record<string, string>>((m, d) => {
+      m[d._id] = (d as any).name ?? "";
+      return m;
+    }, {}),
     [dests]
   );
 
@@ -68,7 +103,8 @@ export default function ToursManage() {
     return tours.filter((t) => (t.rating_avg ?? 0) >= ratingMin);
   }, [tours, ratingMin]);
 
-  if (loading) return <div className="p-6">Đang tải dữ liệu…</div>;
+  if (initLoading) return <div className="p-6">Đang tải dữ liệu…</div>;
+
 
   return (
     <div className="space-y-6">
@@ -84,76 +120,111 @@ export default function ToursManage() {
 
       {/* ---------------- Filters Card ---------------- */}
       <div className="rounded-2xl border bg-white/70 backdrop-blur p-4 md:p-5 shadow-sm">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+
+          {/* Điểm đi */}
           <label className="space-y-1">
-            <span className="text-sm text-slate-600">Điểm đi</span>
+            <span className="text-xs font-medium text-slate-600">Điểm đi</span>
             <select
               value={departure}
               onChange={(e) => setDeparture(e.target.value)}
-              className="w-full h-10 rounded-lg border px-3"
+              className="w-full h-10 rounded-lg border px-3 focus:outline-none focus:ring-2 focus:ring-slate-300"
             >
               <option value="">Tất cả</option>
               {dests.map((d) => (
-                <option key={d._id} value={d._id}>
-                  {(d as any).name}
-                </option>
+                <option key={d._id} value={d._id}>{(d as any).name}</option>
               ))}
             </select>
           </label>
-          {/* Destination */}
+
+          {/* Điểm đến */}
           <label className="space-y-1">
-            <span className="text-sm text-slate-600">Điểm đến</span>
+            <span className="text-xs font-medium text-slate-600">Điểm đến</span>
             <select
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              className="w-full h-10 rounded-lg border px-3"
+              className="w-full h-10 rounded-lg border px-3 focus:outline-none focus:ring-2 focus:ring-slate-300"
             >
               <option value="">Tất cả</option>
               {dests.map((d) => (
-                <option key={d._id} value={d._id}>
-                  {(d as any).name}
-                </option>
+                <option key={d._id} value={d._id}>{(d as any).name}</option>
               ))}
             </select>
           </label>
 
-          {/* Min price */}
+          {/* Giá từ */}
           <label className="space-y-1">
-            <span className="text-sm text-slate-600">Giá từ (VND)</span>
-            <input
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={minPrice}
-              onChange={(e) =>
-                setMinPrice(e.target.value.replace(/[^\d]/g, ""))
-              }
-              className="w-full h-10 rounded-lg border px-3"
-            />
+            <span className="text-xs font-medium text-slate-600">Giá từ</span>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">₫</span>
+              <input
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={minPrice}                        // RAW
+                onChange={(e) => setMinPrice(e.target.value.replace(/[^\d]/g, ""))}
+                onBlur={() => {                         // format nhẹ khi blur (optional)
+                  if (minPrice) setMinPrice(String(Number(minPrice))); // chuẩn hoá số
+                }}
+                placeholder="0"
+                className="w-full h-10 rounded-lg border pl-7 pr-8 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              />
+              {minPrice && (
+                <button
+                  type="button"
+                  onClick={() => setMinPrice("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 grid place-items-center rounded hover:bg-slate-100 text-slate-500"
+                  aria-label="Xoá giá từ"
+                >×</button>
+              )}
+            </div>
+            {/* hint đẹp, không ảnh hưởng con trỏ */}
+            {minPrice && (
+              <div className="text-[11px] text-slate-500">
+                ≈ {Number(minPrice).toLocaleString("vi-VN")} đ
+              </div>
+            )}
           </label>
 
-          {/* Max price */}
+          {/* Giá đến */}
           <label className="space-y-1">
-            <span className="text-sm text-slate-600">Đến (VND)</span>
-            <input
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={maxPrice}
-              onChange={(e) =>
-                setMaxPrice(e.target.value.replace(/[^\d]/g, ""))
-              }
-              className="w-full h-10 rounded-lg border px-3"
-            />
+            <span className="text-xs font-medium text-slate-600">Giá từ</span>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">₫</span>
+              <input
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={maxPrice}                        // RAW
+                onChange={(e) => setMaxPrice(e.target.value.replace(/[^\d]/g, ""))}
+                onBlur={() => {                         // format nhẹ khi blur (optional)
+                  if (maxPrice) setMaxPrice(String(Number(maxPrice))); // chuẩn hoá số
+                }}
+                placeholder="0"
+                className="w-full h-10 rounded-lg border pl-7 pr-8 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              />
+              {maxPrice && (
+                <button
+                  type="button"
+                  onClick={() => setMaxPrice("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 grid place-items-center rounded hover:bg-slate-100 text-slate-500"
+                  aria-label="Xoá giá từ"
+                >×</button>
+              )}
+            </div>
+            {/* hint đẹp, không ảnh hưởng con trỏ */}
+            {maxPrice && (
+              <div className="text-[11px] text-slate-500">
+                ≈ {Number(maxPrice).toLocaleString("vi-VN")} đ
+              </div>
+            )}
           </label>
 
-          {/* Rating */}
+          {/* Đánh giá tối thiểu */}
           <label className="space-y-1">
-            <span className="text-sm text-slate-600">Đánh giá tối thiểu</span>
+            <span className="text-xs font-medium text-slate-600">Đánh giá tối thiểu</span>
             <select
               value={String(ratingMin)}
-              onChange={(e) =>
-                setRatingMin(Number(e.target.value) as RatingOption)
-              }
-              className="w-full h-10 rounded-lg border px-3"
+              onChange={(e) => setRatingMin(Number(e.target.value) as RatingOption)}
+              className="w-full h-10 rounded-lg border px-3 focus:outline-none focus:ring-2 focus:ring-slate-300"
             >
               <option value="0">Tất cả</option>
               <option value="3">≥ 3.0★</option>
@@ -163,34 +234,20 @@ export default function ToursManage() {
           </label>
         </div>
 
-        {/* Active filters + reset */}
+        {/* Active filters */}
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-          {(destination || departure || minPrice || maxPrice || ratingMin) ? (
+          {destination || departure || minPrice || maxPrice || ratingMin ? (
             <>
-              <span className="text-slate-500 mr-1">Bộ lọc đang áp dụng:</span>
-              {departure && (
-                <Chip onClear={() => setDeparture("")}>
-                  {destMap[departure] || "Điểm đi"}
-                </Chip>
-              )}
-              {destination && (
-                <Chip onClear={() => setDestination("")}>
-                  {destMap[destination] || "Điểm đến"}
-                </Chip>
-              )}
+              <span className="text-slate-500 mr-1">Bộ lọc:</span>
+              {departure && <Chip onClear={() => setDeparture("")}>{destMap[departure] || "Điểm đi"}</Chip>}
+              {destination && <Chip onClear={() => setDestination("")}>{destMap[destination] || "Điểm đến"}</Chip>}
               {minPrice && (
-                <Chip onClear={() => setMinPrice("")}>
-                  Từ {Number(minPrice).toLocaleString("vi-VN")}đ
-                </Chip>
+                <Chip onClear={() => setMinPrice("")}>Từ {Number(minPrice).toLocaleString("vi-VN")}đ</Chip>
               )}
               {maxPrice && (
-                <Chip onClear={() => setMaxPrice("")}>
-                  Đến {Number(maxPrice).toLocaleString("vi-VN")}đ
-                </Chip>
+                <Chip onClear={() => setMaxPrice("")}>Đến {Number(maxPrice).toLocaleString("vi-VN")}đ</Chip>
               )}
-              {ratingMin ? (
-                <Chip onClear={() => setRatingMin(0)}>≥ {ratingMin}★</Chip>
-              ) : null}
+              {ratingMin ? <Chip onClear={() => setRatingMin(0)}>≥ {ratingMin}★</Chip> : null}
               <button
                 onClick={() => {
                   setDestination("");
@@ -205,15 +262,17 @@ export default function ToursManage() {
               </button>
             </>
           ) : (
-            <span className="text-slate-500">
-              Chọn bộ lọc để thu hẹp kết quả.
-            </span>
+            <span className="text-slate-500">Chọn bộ lọc để thu hẹp kết quả.</span>
           )}
         </div>
       </div>
 
+
       {/* ---------------- Table ---------------- */}
       <div className="overflow-x-auto border rounded-xl">
+      {tableLoading ? (
+        <div className="p-6 text-slate-500">Đang tải tour…</div>
+      ) : (
         <table className="min-w-[920px] w-full text-sm">
           <thead className="bg-slate-50">
             <tr>
@@ -292,6 +351,7 @@ export default function ToursManage() {
             )}
           </tbody>
         </table>
+      )}
       </div>
 
       {/* ---------------- Form Popup ---------------- */}

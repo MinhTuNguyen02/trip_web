@@ -19,6 +19,8 @@ import AdminLayout from "./admin/AdminLayout";
 import AdminDashboard from "./admin/AdminDashboard";
 import ToursManage from "./admin/ToursManage";
 import POIsManage from "./admin/POIsManage";
+import UsersManage from "./admin/UsersManage";
+import BookingsManage from "./admin/BookingsManage";
 import DestinationsManage from "./admin/DestinationsManage";
 import TourDetail from "./pages/TourDetail";
 import ProfilePage from "./pages/Profile";
@@ -56,9 +58,9 @@ export default function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="tours" element={<ToursManage />} />
             <Route path="pois" element={<POIsManage />} />
-            <Route path="bookings" element={<Bookings />} />
-            <Route path="payments" element={<Payments />} />
+            <Route path="users" element={<UsersManage />} />
             <Route path="destinations" element={<DestinationsManage />} /> 
+            <Route path="bookings" element={<BookingsManage />} />
           </Route>
         </Routes>
       </main>
