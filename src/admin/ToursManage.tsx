@@ -33,6 +33,7 @@ export default function ToursManage() {
 
   // ---------------- Filters ----------------
   const [destination, setDestination] = useState<string>("");
+  const [departure, setDeparture] = useState<string>("");
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
   const [ratingMin, setRatingMin] = useState<RatingOption>(0);
@@ -41,6 +42,7 @@ export default function ToursManage() {
     setLoading(true);
     const params: any = {};
     if (destination) params.destination = destination;
+    if (departure) params.departure = departure;
     if (minPrice.trim() !== "") params.minPrice = Number(minPrice);
     if (maxPrice.trim() !== "") params.maxPrice = Number(maxPrice);
     const [t, d] = await Promise.all([listTours(params), listDestinations()]);
@@ -49,7 +51,7 @@ export default function ToursManage() {
     setLoading(false);
   };
 
-  useEffect(() => { reload(); }, [destination, minPrice, maxPrice]);
+  useEffect(() => { reload(); }, [destination, departure, minPrice, maxPrice]);
 
   const destMap = useMemo(
     () =>
@@ -83,6 +85,21 @@ export default function ToursManage() {
       {/* ---------------- Filters Card ---------------- */}
       <div className="rounded-2xl border bg-white/70 backdrop-blur p-4 md:p-5 shadow-sm">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <label className="space-y-1">
+            <span className="text-sm text-slate-600">Điểm đi</span>
+            <select
+              value={departure}
+              onChange={(e) => setDeparture(e.target.value)}
+              className="w-full h-10 rounded-lg border px-3"
+            >
+              <option value="">Tất cả</option>
+              {dests.map((d) => (
+                <option key={d._id} value={d._id}>
+                  {(d as any).name}
+                </option>
+              ))}
+            </select>
+          </label>
           {/* Destination */}
           <label className="space-y-1">
             <span className="text-sm text-slate-600">Điểm đến</span>
@@ -148,9 +165,14 @@ export default function ToursManage() {
 
         {/* Active filters + reset */}
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-          {(destination || minPrice || maxPrice || ratingMin) ? (
+          {(destination || departure || minPrice || maxPrice || ratingMin) ? (
             <>
               <span className="text-slate-500 mr-1">Bộ lọc đang áp dụng:</span>
+              {departure && (
+                <Chip onClear={() => setDeparture("")}>
+                  {destMap[departure] || "Điểm đi"}
+                </Chip>
+              )}
               {destination && (
                 <Chip onClear={() => setDestination("")}>
                   {destMap[destination] || "Điểm đến"}
@@ -172,6 +194,7 @@ export default function ToursManage() {
               <button
                 onClick={() => {
                   setDestination("");
+                  setDeparture("");
                   setMinPrice("");
                   setMaxPrice("");
                   setRatingMin(0);
@@ -195,6 +218,7 @@ export default function ToursManage() {
           <thead className="bg-slate-50">
             <tr>
               <th className="p-2 text-left">Tiêu đề</th>
+              <th className="p-2 text-left">Điểm đi</th>
               <th className="p-2 text-left">Điểm đến</th>
               <th className="p-2 text-right">Giá</th>
               <th className="p-2 text-center">Đánh giá</th>
@@ -206,6 +230,7 @@ export default function ToursManage() {
             {visibleTours.map((t) => (
               <tr key={t._id} className="border-t hover:bg-slate-50/40">
                 <td className="p-2 font-medium">{t.title}</td>
+                <td className="p-2">{destMap[t.departure_id] || t.departure_id}</td>
                 <td className="p-2">{destMap[t.destination_id] || t.destination_id}</td>
                 <td className="p-2 text-right">
                   {t.price.toLocaleString("vi-VN")} đ
@@ -325,6 +350,7 @@ function TourForm({
 
   // --- NEW: POIs theo destination ---
   const [selectedDest, setSelectedDest] = useState<string>(String(initial?.destination_id || ""));
+  const [selectedDep, setSelectedDep] = useState<string>(String(initial?.destination_id || ""));
   const [poiOptions, setPoiOptions] = useState<POI[]>([]);
   const [poiSelected, setPoiSelected] = useState<string[]>(
     (initial as any)?.poi_ids || []
@@ -399,6 +425,7 @@ function TourForm({
           const f = new FormData(e.currentTarget);
           const is_active = f.get("is_active") !== null;
           const data: Partial<Tour> = {
+            departure_id: String(f.get("departure_id")),
             destination_id: String(f.get("destination_id")),
             title: String(f.get("title")),
             summary: String(f.get("summary") || ""),
@@ -441,6 +468,23 @@ function TourForm({
           <section className="space-y-3">
             <div className="text-sm font-medium text-slate-700">Thông tin cơ bản</div>
             <div className="grid gap-3 md:grid-cols-2">
+              <label className="space-y-1">
+                <span className="text-sm text-slate-600">Điểm đi</span>
+                <select
+                  name="departure_id"
+                  value={selectedDep}
+                  onChange={(e) => setSelectedDep(e.target.value)}
+                  required
+                  className="w-full border rounded-lg h-10 px-3"
+                >
+                  <option value="">-- Chọn điểm đi --</option>
+                  {dests.map((d) => (
+                    <option key={d._id} value={d._id}>
+                      {(d as any).name}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label className="space-y-1">
                 <span className="text-sm text-slate-600">Điểm đến</span>
                 <select

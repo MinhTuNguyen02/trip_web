@@ -14,6 +14,7 @@ export type TourLite =
 export type Tour = {
   _id: string;
   destination_id: string;
+  departure_id: string;
   title: string;
   summary: string;
   description: string;

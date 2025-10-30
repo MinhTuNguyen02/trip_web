@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { listTours } from "../api/tours";
 import { listDestinations } from "../api/destinations";
-import { addCartItemTour } from "../api/cart";
 import type { Tour, Destination } from "../types";
 import { AuthCtx } from "../contexts/AuthContext";
 import { useContext } from "react";
@@ -17,6 +16,7 @@ export default function Tours() {
 
   // Filters (UI state)
   const [destination, setDestination] = useState<string>("");
+  const [departure, setDeparture] = useState<string>("");
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
   const [ratingMin, setRatingMin] = useState<RatingOption>(0);
@@ -31,13 +31,14 @@ export default function Tours() {
     setLoading(true);
     const params: any = {};
     if (destination) params.destination = destination;
+    if (departure) params.departure = departure;
     if (minPrice.trim() !== "") params.minPrice = Number(minPrice);
     if (maxPrice.trim() !== "") params.maxPrice = Number(maxPrice);
 
     listTours(params)
       .then(setTours)
       .finally(() => setLoading(false));
-  }, [destination, minPrice, maxPrice]);
+  }, [destination, departure, minPrice, maxPrice]);
 
   // Map destination id -> name
   const destName = useMemo(() => {
@@ -65,6 +66,21 @@ export default function Tours() {
         {/* Filters Card */}
         <div className="mb-6 rounded-2xl border bg-white/70 backdrop-blur p-4 md:p-5 shadow-sm">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <label className="space-y-1">
+              <span className="text-sm text-slate-600">Điểm đi</span>
+              <select
+                value={departure}
+                onChange={(e) => setDeparture(e.target.value)}
+                className="w-full h-10 rounded-lg border px-3"
+              >
+                <option value="">Tất cả</option>
+                {destinations.map((d) => (
+                  <option key={d._id} value={d._id}>
+                    {(d as any).name}
+                  </option>
+                ))}
+              </select>
+            </label>
             {/* Destination */}
             <label className="space-y-1">
               <span className="text-sm text-slate-600">Điểm đến</span>
@@ -124,12 +140,17 @@ export default function Tours() {
 
           {/* Active filters + reset */}
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-            {(destination || minPrice || maxPrice || ratingMin) ? (
+            {(destination || departure || minPrice || maxPrice || ratingMin) ? (
               <>
                 <span className="text-slate-500 mr-1">Bộ lọc đang áp dụng:</span>
+                {departure && (
+                  <Chip onClear={() => setDeparture("")}>
+                    Từ {(destName[departure] || "Điểm đi")}
+                  </Chip>
+                )}
                 {destination && (
                   <Chip onClear={() => setDestination("")}>
-                    {(destName[destination] || "Điểm đến")}
+                    Đến {(destName[destination] || "Điểm đến")}
                   </Chip>
                 )}
                 {minPrice && <Chip onClear={() => setMinPrice("")}>Từ {Number(minPrice).toLocaleString("vi-VN")}đ</Chip>}
@@ -138,6 +159,7 @@ export default function Tours() {
                 <button
                   onClick={() => {
                     setDestination("");
+                    setDeparture("");
                     setMinPrice("");
                     setMaxPrice("");
                     setRatingMin(0);
@@ -159,7 +181,7 @@ export default function Tours() {
         ) : visibleTours.length ? (
           <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {visibleTours.map((t) => (
-              <TourCard key={t._id} tour={t} destinationName={destName[t.destination_id]}/>
+              <TourCard key={t._id} tour={t} destinationName={destName[t.destination_id]} departureName={destName[t.departure_id]}/>
             ))}
           </div>
         ) : (
@@ -178,7 +200,7 @@ export default function Tours() {
 import { Link } from "react-router-dom";
 import OptionPicker from "../components/OptionPicker";
 
-function TourCard({ tour, destinationName }: { tour: Tour; destinationName?: string }) {
+function TourCard({ tour, destinationName, departureName }: { tour: Tour; destinationName?: string; departureName?: string }) {
   const cover = tour.images?.[0];
   const [openPicker, setOpenPicker] = useState(false);
   const { user } = useContext(AuthCtx);
@@ -213,7 +235,7 @@ function TourCard({ tour, destinationName }: { tour: Tour; destinationName?: str
       <div className="p-4 space-y-2">
         <div className="flex items-start justify-between gap-3">
           <Link to={`/tours/${tour._id}`} className="font-semibold leading-snug hover:underline">
-            {tour.title}
+            [{departureName} - {destinationName}] {tour.title}
           </Link>
           <div className="text-right shrink-0">
             <div className="text-rose-600 font-bold">
