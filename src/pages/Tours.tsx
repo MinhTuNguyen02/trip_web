@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from "react";
 import { listTours } from "../api/tours";
 import { listDestinations } from "../api/destinations";
@@ -282,6 +283,7 @@ function TourCard({ tour, destinationName, departureName }: { tour: Tour; destin
         open={openPicker}
         onClose={() => setOpenPicker(false)}
         onAdded={() => setOpenPicker(false)}
+        is_active={tour.is_active}        
       />
     </div>
   );

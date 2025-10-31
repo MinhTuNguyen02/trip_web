@@ -1,5 +1,5 @@
 import { api } from "./http";
-import type { Tour, Destination, POI, User } from "../types";
+import type { Tour, Destination, POI, User, ListParams, ListResp, AdminBooking } from "../types";
 
 /* --------- Tours --------- */
 export async function adminCreateTour(body: Partial<Tour>) {
@@ -83,48 +83,23 @@ export async function adminGetBooking(id: string): Promise<AdminBooking> {
   const { data } = await api.get(`/admin/${id}`); // <-- thêm /
   return data;
 }
-export type ListParams = {
-  q?: string;            // tìm theo email, tên user, title, orderCode
-  status?: string;       // booking status
-  payment_status?: string;
-  date_from?: string;    // ISO yyyy-mm-dd
-  date_to?: string;      // ISO yyyy-mm-dd
-  limit?: number;
-  page?: number;         // 1-based
-};
 
-export type ListResp = {
-  items: AdminBooking[];
-  total: number;
-  page: number;
-  pages: number;
-};
-export type AdminBooking = {
-  _id: string;
-  user: { _id: string; name: string; email: string } | string; // tuỳ populate
-  user_id?: string;
-  tour_id: string;
-  option_id: string;
-  snapshot_title?: string;
-  start_date?: string;   // ISO
-  start_time?: string;   // "HH:mm"
-  qty: number;
-  unit_price: number;
-  total: number;
-  status: "pending" | "confirmed" | "cancelled";
-  payment_status: "unpaid" | "paid" | "refunded";
-  payment_id?: string;
-  createdAt: string;
-  updatedAt: string;
-  tickets?: Array<{
-    _id: string;
-    code: string;
-    status: "valid" | "used" | "void";
-    passenger?: { name?: string; phone?: string; address?: string };
-  }>;
-  payment?: {
-    provider: string;
-    intent_id?: string; // orderCode
-    status: string;
-  };
-};
+export type RevenuePoint = { _id: string; revenue: number };
+
+export async function getSummary() {
+  const { data } = await api.get("/dashboard/summary");
+  return data as { users: number; tours: number; bookings: number; revenue: number };
+}
+
+export async function getRevenue(range: "day" | "month" | "year" = "month") {
+  const { data } = await api.get<RevenuePoint[]>("/dashboard/revenue", { params: { range } });
+  return data;
+}
+
+export async function getTopDestinations() {
+  const { data } = await api.get<Array<{ _id: string; count: number }>>(
+    "/dashboard/destinations"
+  );
+  return data;
+}
+

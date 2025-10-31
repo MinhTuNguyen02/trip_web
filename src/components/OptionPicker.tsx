@@ -1,8 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/OptionPicker.tsx
 import { useEffect, useMemo, useState, useContext } from "react";
 import type { TourOption } from "../types";
 import { listTourOptions } from "../api/tourOption";
-import { addCartItemTour } from "../api/cart";
 import { AuthCtx } from "../contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
@@ -13,11 +13,13 @@ export default function OptionPicker({
   open,
   onClose,
   onAdded,
+  is_active
 }: {
   tourId: string;
   open: boolean;
   onClose(): void;
   onAdded?(): void;
+  is_active: boolean
 }) {
   const [opts, setOpts] = useState<TourOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -169,9 +171,9 @@ export default function OptionPicker({
               </div>
               <button
                 onClick={handleAdd}
-                disabled={!!disabledReason || submitting}
-                className={`px-4 h-10 rounded-lg text-white hover:opacity-90 ${
-                  submitting || disabledReason
+                disabled={!!disabledReason || submitting || !is_active}
+                className={`px-4 h-10 rounded-lg text-white hover:opacity-90 text-sm ${
+                  submitting || disabledReason || !is_active
                     ? "bg-slate-300 cursor-not-allowed"
                     : "bg-slate-900"
                 }`}

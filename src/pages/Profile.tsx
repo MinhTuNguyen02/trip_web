@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/Profile.tsx
 import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
@@ -96,7 +97,7 @@ export default function ProfilePage() {
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-8">
       {/* -------- Hồ sơ -------- */}
-      <div className="rounded-2xl border bg-white p-5">
+      {user.role!="admin" && <div className="rounded-2xl border bg-white p-5">
         <h1 className="text-xl font-semibold mb-4">Thông tin cá nhân</h1>
 
         {msg && <div className="mb-3 text-sm bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-2 rounded">{msg}</div>}
@@ -128,7 +129,7 @@ export default function ProfilePage() {
             </button>
           </div>
         </form>
-      </div>
+      </div>}
 
       {/* -------- Đổi mật khẩu -------- */}
       <div className="rounded-2xl border bg-white p-5">

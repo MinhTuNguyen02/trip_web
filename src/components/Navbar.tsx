@@ -141,13 +141,22 @@ export default function Navbar() {
                   onMouseLeave={() => setOpen(false)}
                 >
                   {isAdmin ? (
-                    <NavLink
-                      to="/admin"
-                      className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-100"
-                      onClick={() => setOpen(false)}
-                    >
-                      Trang quản trị
-                    </NavLink>
+                    <>
+                      <NavLink
+                        to="/profile"
+                        className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-100"
+                        onClick={() => setOpen(false)}
+                      >
+                        Hồ sơ
+                      </NavLink>
+                      <NavLink
+                        to="/admin"
+                        className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-100"
+                        onClick={() => setOpen(false)}
+                      >
+                        Trang quản trị
+                      </NavLink>
+                    </>
                   ) : (
                     <>
                       <NavLink

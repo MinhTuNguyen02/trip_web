@@ -111,7 +111,7 @@ export default function UsersManager() {
                 <label className="block space-y-1">
                   <span className="text-sm text-slate-600">Tên</span>
                   <input
-                    className="w-full h-10 rounded-lg border px-3 text-slate-400"
+                    className="w-full h-10 rounded-lg border px-3 placeholder:text-slate-400"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Nguyễn Văn A"
@@ -120,7 +120,7 @@ export default function UsersManager() {
                 <label className="block space-y-1">
                   <span className="text-sm text-slate-600">Email</span>
                   <input
-                    className="w-full h-10 rounded-lg border px-3 text-slate-400"
+                    className="w-full h-10 rounded-lg border px-3 placeholder:text-slate-400"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@example.com"
@@ -130,7 +130,7 @@ export default function UsersManager() {
                   <span className="text-sm text-slate-600">Mật khẩu</span>
                   <input
                     type="password"
-                    className="w-full h-10 rounded-lg border px-3 text-slate-400"
+                    className="w-full h-10 rounded-lg border px-3 placeholder:text-slate-400"
                     value={pwd}
                     onChange={(e) => setPwd(e.target.value)}
                     placeholder="••••••"
@@ -140,7 +140,7 @@ export default function UsersManager() {
                   <span className="text-sm text-slate-600">Xác nhận mật khẩu</span>
                   <input
                     type="password"
-                    className="w-full h-10 rounded-lg border px-3 text-slate-400"
+                    className="w-full h-10 rounded-lg border px-3 placeholder:text-slate-400"
                     value={pwd2}
                     onChange={(e) => setPwd2(e.target.value)}
                     placeholder="••••••"

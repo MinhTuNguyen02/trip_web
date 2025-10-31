@@ -3,9 +3,9 @@ import React from "react";
 import {
   adminListBookings,
   adminGetBooking,
-  type AdminBooking,
-  type ListParams,
 } from "../api/admin";
+
+import type { AdminBooking, ListParams } from "../types/index"
 
 type StatusOpt = "" | "pending" | "confirmed" | "cancelled";
 type PayStatusOpt = "" | "unpaid" | "paid" | "refunded";
@@ -122,7 +122,7 @@ export default function BookingsManage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Email, tên khách, tiêu đề tour, orderCode…"
-              className="w-full h-10 rounded-lg border px-3 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              className="w-full h-10 rounded-lg border px-3 focus:outline-none focus:ring-2 focus:ring-slate-300 placeholder:text-slate-400"
             />
           </label>
 
@@ -212,7 +212,6 @@ export default function BookingsManage() {
               <th className="p-2 text-left">Khách</th>
               <th className="p-2 text-left">Tour</th>
               <th className="p-2 text-center">Khởi hành</th>
-              <th className="p-2 text-right">SL</th>
               <th className="p-2 text-right">Tổng</th>
               <th className="p-2 text-center">Thanh toán</th>
               <th className="p-2 text-center">Trạng thái</th>
@@ -239,9 +238,9 @@ export default function BookingsManage() {
                     <td className="p-2">{userLabel}</td>
                     <td className="p-2">{b.snapshot_title || b.tour_id}</td>
                     <td className="p-2 text-center">
-                      {(b.start_date || b.start_time) ? `${b.start_date ?? ""} ${b.start_time ?? ""}`.trim() : "—"}
+                      {(b.start_date || b.start_time) ? b.start_time + " - " + fmtDate(b.start_date).slice(9) : "—"}
+                      {/* {fmtDate(b.start_date).slice(9)} - {b.start_time}                     */}
                     </td>
-                    <td className="p-2 text-right">{b.qty}</td>
                     <td className="p-2 text-right">{fmtVND(b.total)}</td>
                     <td className="p-2 text-center">
                       {b.payment_status === "paid" && <Badge color="emerald">Đã thanh toán</Badge>}
@@ -329,7 +328,7 @@ export default function BookingsManage() {
                   <div><span className="text-slate-500">Khách:</span> <b>{typeof detail.user === "string" ? detail.user : `${detail.user?.name ?? ""} <${detail.user?.email ?? ""}>`}</b></div>
                   <div><span className="text-slate-500">Tạo lúc:</span> <b>{fmtDate(detail.createdAt)}</b></div>
                   <div><span className="text-slate-500">Tour:</span> <b>{detail.snapshot_title || detail.tour_id}</b></div>
-                  <div><span className="text-slate-500">Khởi hành:</span> <b>{(detail.start_date || detail.start_time) ? `${detail.start_date ?? ""} ${detail.start_time ?? ""}`.trim() : "—"}</b></div>
+                  <div><span className="text-slate-500">Khởi hành:</span> <b>{(detail.start_date || detail.start_time) ? detail.start_time + " - " + fmtDate(detail.start_date).slice(9) : "—"}</b></div>
                   <div><span className="text-slate-500">Số lượng:</span> <b>{detail.qty}</b></div>
                   <div><span className="text-slate-500">Tổng tiền:</span> <b>{fmtVND(detail.total)}</b></div>
                   <div><span className="text-slate-500">Thanh toán:</span> <b>{detail.payment_status}</b></div>

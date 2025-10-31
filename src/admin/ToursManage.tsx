@@ -410,7 +410,7 @@ function TourForm({
 
   // --- NEW: POIs theo destination ---
   const [selectedDest, setSelectedDest] = useState<string>(String(initial?.destination_id || ""));
-  const [selectedDep, setSelectedDep] = useState<string>(String(initial?.destination_id || ""));
+  const [selectedDep, setSelectedDep] = useState<string>(String(initial?.departure_id || ""));
   const [poiOptions, setPoiOptions] = useState<POI[]>([]);
   const [poiSelected, setPoiSelected] = useState<string[]>(
     (initial as any)?.poi_ids || []

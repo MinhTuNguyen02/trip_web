@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import { AuthCtx, type AuthContextType, type User } from "../contexts/AuthContext";
 import { login as apiLogin, me as apiMe, logout as apiLogout, register as apiRegister } from "../api/auth";
