@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 
 .env
+/public/data/*
+!/public/data/.gitkeep
+
+/src/data/*
+!/src/data/.gitkeep

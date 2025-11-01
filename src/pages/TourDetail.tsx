@@ -110,6 +110,7 @@ export default function TourDetail() {
         tourId={tour._id}
         open={openPicker}
         onClose={() => setOpenPicker(false)}
+        is_active={tour.is_active} 
       />
     </div>
   );

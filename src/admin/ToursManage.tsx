@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { listTours } from "../api/tours";
 import { listDestinations } from "../api/destinations";
@@ -22,6 +23,9 @@ import {
 } from "../api/tourOption";
 import { createPortal } from "react-dom";
 import React from "react";
+// import diaphantinh from "../data/diaphantinh.geojson" assert { type: "json" };
+import rawGeo from "../data/diaphantinh.geojson?raw";
+const diaphantinh = JSON.parse(rawGeo);
 
 type RatingOption = 0 | 3 | 4 | 4.5;
 
@@ -395,6 +399,85 @@ function Chip({
   );
 }
 
+function vnNormalize(s: string) {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
+    .trim();
+}
+
+// NEW: tính centroid [lon, lat] cho mỗi tỉnh trong geojson
+type Centroid = { lon: number; lat: number; rawName: string };
+function computeCentroids(gj: any) {
+  // Tính centroid thủ công (đơn giản): lấy bbox trung bình hoặc centroid d3-geo nếu bạn đã cài
+  // Ở đây ưu tiên bbox (đa phần file hành chính có bbox)
+  const out = new Map<string, Centroid>();
+  for (const f of gj.features || []) {
+    const props = f.properties || {};
+    const name =
+      props?.name ||
+      props?.Name ||
+      props?.NAME_1 ||
+      props?.ten_tinh ||
+      props?.TENGEO ||
+      "";
+    if (!name) continue;
+
+    let lon = 0,
+      lat = 0;
+
+    if (f.bbox && f.bbox.length === 4) {
+      const [minLon, minLat, maxLon, maxLat] = f.bbox;
+      lon = (minLon + maxLon) / 2;
+      lat = (minLat + maxLat) / 2;
+    } else {
+      // fallback rất đơn giản: quét toàn bộ toạ độ và lấy trung bình
+      const coords: number[] = [];
+      const pull = (c: any) => {
+        if (typeof c?.[0] === "number" && typeof c?.[1] === "number") {
+          coords.push(c[0], c[1]);
+        } else if (Array.isArray(c)) {
+          c.forEach(pull);
+        }
+      };
+      pull(f.geometry?.coordinates);
+      if (coords.length >= 2) {
+        let xs = 0,
+          ys = 0,
+          n = 0;
+        for (let i = 0; i < coords.length; i += 2) {
+          xs += coords[i];
+          ys += coords[i + 1];
+          n++;
+        }
+        lon = xs / n;
+        lat = ys / n;
+      }
+    }
+    if (lon && lat) out.set(vnNormalize(String(name)), { lon, lat, rawName: String(name) });
+  }
+  return out;
+}
+
+const CENTROIDS = computeCentroids(diaphantinh as any);
+
+// NEW: haversine km
+function haversineKm(a: Centroid, b: Centroid) {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLon = toRad(b.lon - a.lon);
+  const la1 = toRad(a.lat);
+  const la2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
 function TourForm({
   dests,
   initial,
@@ -474,6 +557,44 @@ function TourForm({
     if (tourId) loadOptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tourId]);
+
+  const [autoPrice, setAutoPrice] = useState<number>(initial?.price ?? 0);
+
+  // NEW: map tên destination -> centroid bằng cách so tên (không dấu)
+  function findCentroidByDestId(id?: string) {
+    if (!id) return null;
+    const d = dests.find((x) => String(x._id) === String(id));
+    if (!d) return null;
+    const key = vnNormalize((d as any).name || "");
+    return CENTROIDS.get(key) || null;
+  }
+
+  // NEW: công thức giá
+  function quotePrice(fromId?: string, toId?: string) {
+    const A = findCentroidByDestId(fromId);
+    const B = findCentroidByDestId(toId);
+    if (!A || !B) return 0;
+
+    const km = haversineKm(A, B);
+    const base = 70000;     
+    const perKm = 4000;     
+    const surge = 1.0;      // có thể thay đổi theo mùa
+    let price = Math.round((base + perKm * km) * surge);
+
+    // làm tròn về 1.000đ
+    price = Math.round(price / 1000) * 1000;
+    return price;
+  }
+
+  // NEW: khi chọn điểm đi/đến thì tự tính giá
+  useEffect(() => {
+    if (selectedDep && selectedDest) {
+      setAutoPrice(quotePrice(selectedDep, selectedDest));
+    } else {
+      setAutoPrice(initial?.price ?? 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDep, selectedDest]);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
       {/* Backdrop */}
@@ -490,7 +611,8 @@ function TourForm({
             title: String(f.get("title")),
             summary: String(f.get("summary") || ""),
             description: String(f.get("description") || ""),
-            price: Number(f.get("price") || 0),
+            // price: Number(f.get("price") || 0),
+            price: Number(autoPrice || 0),
             duration_hr: Number(f.get("duration_hr") || 0),
             images: preview,
             policy: String(f.get("policy") || ""),
@@ -596,14 +718,18 @@ function TourForm({
 
               <label className="space-y-1">
                 <span className="text-sm text-slate-600">Giá (VND)</span>
+                {/* Disabled để người dùng không nhập tay */}
                 <input
-                  name="price"
-                  type="number"
-                  min={0}
-                  defaultValue={initial?.price}
-                  required
-                  className="w-full border rounded-lg h-10 px-3"
+                  type="text"
+                  value={autoPrice ? autoPrice.toLocaleString("vi-VN") : ""}
+                  disabled
+                  className="w-full border rounded-lg h-10 px-3 bg-slate-50 text-slate-700"
                 />
+                {/* Hidden field để vẫn submit qua FormData nếu bạn giữ cách lấy từ form */}
+                <input type="hidden" name="price" value={String(autoPrice || 0)} />
+                <div className="text-xs text-slate-500">
+                  Giá tự tính theo khoảng cách giữa <b>Điểm đi</b> và <b>Điểm đến</b>.
+                </div>
               </label>
 
               <label className="space-y-1">

@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import { AuthCtx, type AuthContextType, type User } from "../contexts/AuthContext";
 import { login as apiLogin, me as apiMe, logout as apiLogout, register as apiRegister } from "../api/auth";
+import { useNavigate, useLocation } from "react-router-dom";
+
 
 function normalizeUser(u: any): NonNullable<User> {
   if (!u) return null as any;
@@ -18,6 +20,8 @@ function normalizeUser(u: any): NonNullable<User> {
 const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -43,6 +47,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const logout: AuthContextType["logout"] = () => {
     apiLogout();
     setUser(null);
+    navigate("/login", { state: { from: location } });
   };
 
   return (
