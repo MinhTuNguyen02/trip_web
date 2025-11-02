@@ -174,6 +174,13 @@ export default function Navbar() {
                         Đơn đã đặt
                       </NavLink>
                       <NavLink
+                        to="/ticket"
+                        className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-100"
+                        onClick={() => setOpen(false)}
+                      >
+                        Vé của tôi
+                      </NavLink>
+                      <NavLink
                         to="/payments"
                         className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-100"
                         onClick={() => setOpen(false)}

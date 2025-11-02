@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { geoMercator, geoPath } from "d3-geo";
 import * as topojson from "topojson-client";

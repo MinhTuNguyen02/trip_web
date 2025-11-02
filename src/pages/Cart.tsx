@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/Cart.tsx
 import { useContext, useMemo, useState } from "react";
 import { Link } from "react-router-dom";

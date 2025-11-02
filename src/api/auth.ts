@@ -1,3 +1,4 @@
+import type { User } from "../types";
 import { api, setToken } from "./http";
 
 export async function login(email: string, password: string) {
@@ -8,13 +9,12 @@ export async function login(email: string, password: string) {
 
 export async function register(name: string, email: string, password: string, phone?: string, address?: string) {
   const { data } = await api.post("/auth/register", { name, email, password, phone, address });
-  // backend trả { user: { id, email } } -> sau đó login
   return data.user;
 }
 
 export async function me() {
   const { data } = await api.get("/auth/me");
-  return data.user as { id: string; name: string; email: string; role?: string; phone?: string; address?: string };
+  return data.user as { id: string; name: string; email: string; role?: string; phone?: string; address?: string; is_active?: boolean };
 }
 
 export async function updateProfile(payload: {
@@ -35,4 +35,13 @@ export async function changePassword(current_password: string, new_password: str
 
 export function logout() {
   setToken(undefined);
+}
+
+export async function toggleUserActive(id: string, is_active: boolean): Promise<User> {
+  const { data } = await api.patch(`/auth/users/${id}/active`, { is_active });
+  return data;
+}
+export async function deleteUser(id: string): Promise<{ ok: true }> {
+  const { data } = await api.delete(`/auth/users/${id}`);
+  return data;
 }

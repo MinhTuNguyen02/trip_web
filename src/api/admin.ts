@@ -54,13 +54,17 @@ export async function adminToggleDestinationActive(id: string, is_active: boolea
 }
 
 /* --------- Users --------- */
-export async function listUsers(): Promise<User[]> {
-  const { data } = await api.get("/auth/users"); // backend trả toàn bộ user
+export async function listUsers(q?: string): Promise<User[]> {
+  const { data } = await api.get("/auth/users", {
+    params: q ? { q } : undefined, // hoặc { params: { q: q ?? "" } }
+  });
   return data;
 }
 
-export async function listAdmins(): Promise<User[]> {
-  const { data } = await api.get("/auth/admins"); // hoặc /admin/users?role=admin
+export async function listAdmins(q?: string): Promise<User[]> {
+  const { data } = await api.get("/auth/admins", {
+    params: q ? { q } : undefined,
+  });
   return data;
 }
 
@@ -73,7 +77,7 @@ export async function createAdmin(input: {
   return data;
 }
 
-
+/* --------- Bookings --------- */
 export async function adminListBookings(params: ListParams): Promise<ListResp> {
   const { data } = await api.get("/admin/", { params });
   return data;
@@ -84,22 +88,32 @@ export async function adminGetBooking(id: string): Promise<AdminBooking> {
   return data;
 }
 
-export type RevenuePoint = { _id: string; revenue: number };
-
-export async function getSummary() {
+/* --------- Dashboard --------- */
+export async function getSummary(): Promise<{ users: number; tours: number }> {
   const { data } = await api.get("/dashboard/summary");
-  return data as { users: number; tours: number; bookings: number; revenue: number };
-}
-
-export async function getRevenue(range: "day" | "month" | "year" = "month") {
-  const { data } = await api.get<RevenuePoint[]>("/dashboard/revenue", { params: { range } });
   return data;
 }
 
-export async function getTopDestinations() {
-  const { data } = await api.get<Array<{ _id: string; count: number }>>(
-    "/dashboard/destinations"
-  );
+export type SeriesRange = "day" | "month" | "year";
+export type SeriesPoint = { label: string; orders: number; revenue: number };
+
+export async function getSeries(params: {
+  range: SeriesRange;
+  dateFrom?: string; // YYYY-MM-DD (range=day)
+  dateTo?: string;   // YYYY-MM-DD (range=day)
+  year?: number;     // (range=month)
+}): Promise<SeriesPoint[]> {
+  const { data } = await api.get<SeriesPoint[]>("/dashboard/series", { params });
+  return data;
+}
+
+export async function getTopDestinations(params: {
+  range: SeriesRange;
+  dateFrom?: string;
+  dateTo?: string;
+  year?: number;
+}): Promise<Array<{ destination_id: string; name: string; travellers: number }>> {
+  const { data } = await api.get("/dashboard/top-destinations", { params });
   return data;
 }
 

@@ -29,7 +29,7 @@ export default function OptionPicker({
   const [err, setErr] = useState<string>("");
 
   const { user } = useContext(AuthCtx);
-  const { refresh } = useCart(); // ✅ để đồng bộ navbar/badge & CartPage
+  const { refresh } = useCart(); 
   const navigate = useNavigate();
   const location = useLocation();
 

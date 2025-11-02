@@ -14,6 +14,7 @@ function normalizeUser(u: any): NonNullable<User> {
     role: u.role,
     phone: u.phone ?? undefined,
     address: u.address ?? undefined,
+    is_active: u.is_active ?? undefined,
   };
 }
 
@@ -26,8 +27,17 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) { setLoading(false); return; }
+  
     apiMe()
-      .then((u) => setUser(normalizeUser(u)))
+      .then((u) => {
+        if (u?.is_active === false) {
+          // Tự động logout nếu tài khoản đã bị khoá trong lúc đang dùng
+          apiLogout();
+          setUser(null);
+        } else {
+          setUser(normalizeUser(u));
+        }
+      })
       .finally(() => setLoading(false));
   }, []);
 

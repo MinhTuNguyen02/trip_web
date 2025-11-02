@@ -235,6 +235,7 @@ export type User = {
   role: "user" | "admin";
   phone?: string;
   address?: string;
+  is_active: boolean;
   createdAt?: string;
 };
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/Checkout.tsx
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useLocation, Link } from "react-router-dom";

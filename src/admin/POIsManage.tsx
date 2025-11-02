@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/admin/POIsManage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { listPOIs } from "../api/pois";
@@ -57,8 +58,7 @@ export default function POIsManage() {
   }, []);
 
   useEffect(() => {
-    reload(destFilter, typeFilter);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    reload(destFilter, typeFilter); 
   }, [destFilter, typeFilter]);
 
   const destMap = useMemo(

@@ -10,9 +10,7 @@ import Register from "./pages/Register";
 import Bookings from "./pages/Bookings";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Destinations from "./pages/Destinations";
-import AIItinerary from "./pages/AIItinerary";
-import Payments from "./pages/Payments";           
-import FlightQuotes from "./pages/flightQuotes";   
+import Payments from "./pages/Payments";            
 import BookingDetail from "./pages/BookingDetail";
 import AdminRoute from "./routes/AdminRoute";
 import AdminLayout from "./admin/AdminLayout";
@@ -24,6 +22,7 @@ import BookingsManage from "./admin/BookingsManage";
 import DestinationsManage from "./admin/DestinationsManage";
 import TourDetail from "./pages/TourDetail";
 import ProfilePage from "./pages/Profile";
+import TicketPage from "./pages/Ticket";
 
 export default function App() {
   return (
@@ -33,7 +32,6 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/destinations" element={<Destinations />} />
-          <Route path="/ai" element={<AIItinerary />} />
           <Route path="/tours" element={<Tours />} />
           <Route path="/tours/:id" element={<TourDetail />} />
           <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
@@ -43,8 +41,8 @@ export default function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/bookings/:id" element={<ProtectedRoute><BookingDetail /></ProtectedRoute>} />
           <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
-          <Route path="/flights" element={<FlightQuotes />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/ticket" element={<TicketPage />} />
           <Route path="/register" element={<Register />} />
           <Route path="*" element={<Navigate to="/" replace />} />
           <Route
